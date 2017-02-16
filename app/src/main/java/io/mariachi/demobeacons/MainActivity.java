@@ -3,12 +3,16 @@ package io.mariachi.demobeacons;
 import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.RemoteException;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.altbeacon.beacon.Beacon;
@@ -19,24 +23,80 @@ import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import devlight.io.library.ArcProgressStackView;
 
 public class MainActivity extends AppCompatActivity implements BeaconConsumer  {
     @BindView(R.id.txtSalida)
     TextView txtSalida;
 
+    @BindView(R.id.apsv_presentation)
+    ArcProgressStackView arcProgressStackView;
+
+    @BindView(R.id.imgv)
+    ImageView imgv;
+
     BluetoothAdapter bluetoothAdapter;
     BeaconManager beaconManager;
+
+    public final static int MODEL_COUNT = 1;
+
+    private int[]mStartColors = new int[MODEL_COUNT];
+
+    private int[] mEndColors = new int[MODEL_COUNT];
+
+    Animation fade_in,
+                fade_out;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        fade_in= AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade);
+        fade_out=AnimationUtils.loadAnimation(getApplicationContext(),R.anim.fade_out);
+        imgv.startAnimation(fade_in);
 
+        fade_in.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                imgv.startAnimation(fade_out);
+
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        fade_out.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                imgv.startAnimation(fade_in);
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter==null) // If null -> cerrar la aplicación, el dispositivo no tiene bluetooth
         {
@@ -159,6 +219,10 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer  {
                         public void run() {
                             String misDatos = " MAC: "+beacon.getBluetoothAddress()+"\n BluetoothName: "+beacon.getBluetoothName()+"\n Distancia: "+precision+" metros.";
                             setDatos(misDatos);
+                            setArcProgressStackViewValues(precision);
+                            imgv.clearAnimation();
+                            imgv.clearAnimation();
+
                         }
                     });
                 }
@@ -170,6 +234,27 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer  {
         } catch (RemoteException ex) {
             ex.printStackTrace();
         }
+    }
+    public void setArcProgressStackViewValues(double level){
+        float distance = (float) level;
+        distance = distance * 1000;
+
+        // Get colors
+        final String[] startColors = getResources().getStringArray(R.array.devlight);
+        final String[] endColors = getResources().getStringArray(R.array.default_preview);
+        final String[] bgColors = getResources().getStringArray(R.array.medical_express);
+        for (int i = 0; i < MODEL_COUNT; i++) {
+            mStartColors[i] = Color.parseColor(startColors[i]);
+            mEndColors[i] = Color.parseColor(endColors[i]);
+        }
+        List<ArcProgressStackView.Model> models = new ArrayList<>();
+        models.add(new ArcProgressStackView.Model("Proximidad", distance, Color.parseColor(bgColors[0]), mStartColors[0]));
+        arcProgressStackView.setModels(models);
+        arcProgressStackView.setIsShadowed(true);
+        for (ArcProgressStackView.Model model : arcProgressStackView.getModels());
+        arcProgressStackView.animateProgress();
+
+
     }
 
     public void setDatos(String data)

@@ -9,6 +9,7 @@ android {
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
+        vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -28,5 +29,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'org.altbeacon:android-beacon-library:2.9'
     compile 'com.jakewharton:butterknife:8.5.1'
+    compile 'devlight.io:arcprogressstackview:1.0.4'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
 }
